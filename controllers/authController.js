@@ -57,10 +57,20 @@ exports.signup = async (req, res) => {
 exports.verifyOtp = async (req, res) => {
     const { email, otp } = req.body;
     try {
+        console.log("Received email:", email);
+        console.log("Received OTP:", otp);
+
         const user = await User.findOne({ email });
-        if (!user) return res.status(404).json({ message: "User not found." });
+        if (!user) {
+            console.error("User not found for email:", email);
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        console.log("Stored OTP:", user.otp);
+        console.log("OTP Expiry:", user.otpExpiresAt);
 
         if (user.otp !== otp || user.otpExpiresAt < Date.now()) {
+            console.error("Invalid or expired OTP");
             return res.status(400).json({ message: "Invalid or expired OTP." });
         }
 
@@ -71,9 +81,30 @@ exports.verifyOtp = async (req, res) => {
 
         res.status(200).json({ message: "OTP verified successfully! You can now log in." });
     } catch (error) {
+        console.error("Error during OTP verification:", error);
         res.status(500).json({ message: "OTP verification failed. Please try again.", error });
     }
 };
+// exports.verifyOtp = async (req, res) => {
+//     const { email, otp } = req.body;
+//     try {
+//         const user = await User.findOne({ email });
+//         if (!user) return res.status(404).json({ message: "User not found." });
+
+//         if (user.otp !== otp || user.otpExpiresAt < Date.now()) {
+//             return res.status(400).json({ message: "Invalid or expired OTP." });
+//         }
+
+//         user.isVerified = true;
+//         user.otp = undefined;
+//         user.otpExpiresAt = undefined;
+//         await user.save();
+
+//         res.status(200).json({ message: "OTP verified successfully! You can now log in." });
+//     } catch (error) {
+//         res.status(500).json({ message: "OTP verification failed. Please try again.", error });
+//     }
+// };
 
 // Resend OTP
 exports.resendOtp = async (req, res) => {
